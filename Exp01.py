@@ -1,52 +1,47 @@
 import streamlit as st
-import langchain
 from langchain.llms import OpenAI
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
-from langchain.document_loaders import FileSystemLoader
-from langchain.chains import ConversationalRetrievalChain
-import pyttsx3
+from langchain.chains import RetrievalQA
 
-# Get OpenAI key from user
-openai_key = st.text_input("Enter your OpenAI API key:", type="password")
+def generate_response(uploaded_file, openai_api_key, query_text):
+    # Load document if file is uploaded
+    if uploaded_file is not None:
+        documents = [uploaded_file.read().decode()]
+        # Split documents into chunks
+        text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+        texts = text_splitter.create_documents(documents)
+        # Select embeddings
+        embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
+        # Create a vectorstore from documents
+        db = Chroma.from_documents(texts, embeddings)
+        # Create retriever interface
+        retriever = db.as_retriever()
+        # Create QA chain
+        qa = RetrievalQA.from_chain_type(llm=OpenAI(openai_api_key=openai_api_key), chain_type='stuff', retriever=retriever)
+        return qa.run(query_text)
 
-if openai_key:
-   try:
-       # Load dataset (replace path with your actual dataset location)
-       loader = FileSystemLoader("Tire_Recycling_Open_Source.pdf")
-       documents = loader.load()
 
-       # Create vector database
-       vectordb = Chroma(embedding_function=OpenAIEmbeddings())
-       vectordb.index(documents)
+# Page title
+st.set_page_config(page_title='🦜🔗 Ask the Doc App')
+st.title('🦜🔗 Ask the Doc App')
 
-       # Set up language model and chain
-       llm = OpenAI(temperature=0.5, openai_api_key=openai_key)  # Add openai_api_key here
-       chain = ConversationalRetrievalChain.from_llm(
-           llm,
-           vectordb.as_retriever(),
-           condense_question_prompt="Answer this question based on the tire recycling dataset:",
-       )
+# File upload
+uploaded_file = st.file_uploader('Upload an article', type='txt')
+# Query text
+query_text = st.text_input('Enter your question:', placeholder = 'Please provide a short summary.', disabled=not uploaded_file)
 
-       # Initialize text-to-speech engine
-       engine = pyttsx3.init()
+# Form input and query
+result = []
+with st.form('myform', clear_on_submit=True):
+    openai_api_key = st.text_input('OpenAI API Key', type='password', disabled=not (uploaded_file and query_text))
+    submitted = st.form_submit_button('Submit', disabled=not(uploaded_file and query_text))
+    if submitted and openai_api_key.startswith('sk-'):
+        with st.spinner('Calculating...'):
+            response = generate_response(uploaded_file, openai_api_key, query_text)
+            result.append(response)
+            del openai_api_key
 
-       def get_voice_input():
-           text = engine.say("Ask a question about tire recycling:")
-           engine.runAndWait()
-           # Use a speech-to-text library or API to capture user's spoken question
-           return captured_question
-
-       def provide_voice_output(answer):
-           engine.say(answer)
-           engine.runAndWait()
-
-       # Main interaction loop
-       while True:
-           question = get_voice_input()
-           response = chain({"question": question})
-           provide_voice_output(response["answer"])
-
-   except Exception as e:
-       st.error(f"An error occurred: {e}")
-else:
-   st.warning("Please enter your OpenAI API key to proceed.")
+if len(result):
+    st.info(response)
