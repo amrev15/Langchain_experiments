@@ -1,7 +1,5 @@
 streamlit
 langchain
 openai
-pypdf
 chromadb
-docarray
-pyttsx3==2.9.0
+tiktoken
