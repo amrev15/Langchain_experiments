@@ -6,7 +6,7 @@ from langchain.chains import ConversationalRetrievalChain
 import pyttsx3
 
 # Load dataset (replace path with your actual dataset location)
-loader = FileSystemLoader("Tire_Recycling.pdf")
+loader = FileSystemLoader("Tire_Recycling_Open_Source.pdf")
 documents = loader.load()
 
 # Create vector database
