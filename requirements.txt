@@ -1,8 +1,6 @@
 streamlit
 langchain
 openai
-chromadb
-tiktoken
-pdfplumber
-pandas
-sqlite3
+pypdf
+sentence_transformers
+docarray
