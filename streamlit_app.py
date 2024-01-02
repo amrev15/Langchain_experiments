@@ -11,8 +11,8 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain.vectorstores import DocArrayInMemorySearch
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-st.set_page_config(page_title="LangChain Sustainability Bot", page_icon=":earth_asia:")
-st.title(":earth_asia: LangChain Sustainability Bot")
+st.set_page_config(page_title="LangChain Bot", page_icon=":earth_asia:")
+st.title(":earth_asia: LangChain Bot")
 
 
 @st.cache_resource(ttl="1h")
